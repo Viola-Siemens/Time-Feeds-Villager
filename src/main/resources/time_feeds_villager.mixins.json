@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.hexagram2021.time_feeds_villager.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "time_feeds_villager.refmap.json",
+  "mixins": [
+  ],
+  "minVersion": "0.8",
+  "client": [
+  ]
+}

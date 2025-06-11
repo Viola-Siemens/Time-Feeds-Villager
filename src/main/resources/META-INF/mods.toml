@@ -1,0 +1,36 @@
+modLoader="javafml"
+loaderVersion="[46,)"
+license="AGPL v3"
+issueTrackerURL="https://github.com/Viola-Siemens/Time-Feeds-Villager/issues"
+
+[[mods]]
+modId="time_feeds_villager"
+version="${file.jarVersion}"
+displayName="Time Feeds: Villager"
+credits="Liu Dongyu, Potted_plant"
+authors="Liu Dongyu, Potted_plant"
+logoFile="logo.png"
+description='''
+Villagers are now getting old and will die in 6 days. After eating golden apples, they will stop aging.
+
+By the way, they are searching foods from containers to keep satiety.
+'''
+
+[[dependencies.time_feeds_villager]]
+    modId="forge"
+    mandatory=true
+    versionRange="[46,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.time_feeds_villager]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20,1.21)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.time_feeds_villager]]
+    modId="mixinextras"
+    mandatory=true
+    versionRange="[0,)"
+    ordering="NONE"
+    side="BOTH"
