@@ -1,0 +1,11 @@
+{
+  "language": "English",
+  "language.code": "en_us",
+  "language.region": "United States",
+  "jade.time_feeds_villager.bracket": "Bracket: %s",
+  "jade.time_feeds_villager.childhood": "Childhood",
+  "jade.time_feeds_villager.adulthood": "Adulthood",
+  "jade.time_feeds_villager.midlife": "Midlife",
+  "jade.time_feeds_villager.mature_adulthood": "Mature Adulthood",
+  "jade.time_feeds_villager.immune_to_aging": "Immune to Aging"
+}

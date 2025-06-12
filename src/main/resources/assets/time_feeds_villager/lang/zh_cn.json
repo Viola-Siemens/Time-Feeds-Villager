@@ -1,0 +1,11 @@
+{
+  "language": "Chinese",
+  "language.code": "zh_cn",
+  "language.region": "China",
+  "jade.time_feeds_villager.bracket": "年龄：%s",
+  "jade.time_feeds_villager.childhood": "幼年",
+  "jade.time_feeds_villager.adulthood": "青年",
+  "jade.time_feeds_villager.midlife": "中年",
+  "jade.time_feeds_villager.mature_adulthood": "老年",
+  "jade.time_feeds_villager.immune_to_aging": "免疫衰老"
+}
