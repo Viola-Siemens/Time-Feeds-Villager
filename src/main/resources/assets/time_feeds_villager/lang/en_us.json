@@ -7,5 +7,7 @@
   "jade.time_feeds_villager.adulthood": "Adulthood",
   "jade.time_feeds_villager.midlife": "Midlife",
   "jade.time_feeds_villager.mature_adulthood": "Mature Adulthood",
-  "jade.time_feeds_villager.immune_to_aging": "Immune to Aging"
+  "jade.time_feeds_villager.immune_to_aging": "Immune to Aging",
+
+  "death.attack.pike_hidden": "%s dies of old age"
 }
