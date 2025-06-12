@@ -8,4 +8,6 @@ public interface IAgingEntity {
 	}
 
 	boolean time_feeds_villager$isImmuneToAging();
+	void time_feeds_villager$setImmuneToAging();
+	void time_feeds_villager$setImmuneToAging(boolean value);
 }
