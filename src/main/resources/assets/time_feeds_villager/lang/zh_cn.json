@@ -2,6 +2,8 @@
   "language": "Chinese",
   "language.code": "zh_cn",
   "language.region": "China",
+
+  "config.jade.plugin_time_feeds_villager.aging": "村民衰老",
   "jade.time_feeds_villager.bracket": "年龄：%s",
   "jade.time_feeds_villager.childhood": "幼年",
   "jade.time_feeds_villager.adulthood": "青年",
@@ -9,5 +11,5 @@
   "jade.time_feeds_villager.mature_adulthood": "老年",
   "jade.time_feeds_villager.immune_to_aging": "免疫衰老",
 
-  "death.attack.pike_hidden": "%s衰老而死"
+  "death.attack.die_in_bed": "%s衰老而死"
 }

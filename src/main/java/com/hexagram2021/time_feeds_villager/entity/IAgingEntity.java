@@ -7,6 +7,8 @@ public interface IAgingEntity {
 		return TFVCommonConfig.MAX_AGE.get();
 	}
 
+	int time_feeds_villager$getAge();
+	void time_feeds_villager$setAge(int newAge);
 	boolean time_feeds_villager$isImmuneToAging();
 	void time_feeds_villager$setImmuneToAging();
 	void time_feeds_villager$setImmuneToAging(boolean value);

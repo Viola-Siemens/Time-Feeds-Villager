@@ -46,7 +46,7 @@ public enum AgingProvider implements IEntityComponentProvider, IServerDataProvid
 	public void appendServerData(CompoundTag compoundTag, EntityAccessor entityAccessor) {
 		AgeableMob mob = (AgeableMob) entityAccessor.getEntity();
 		if(mob instanceof IAgingEntity agingEntity) {
-			compoundTag.putDouble(TAG_AGING, (double)mob.getAge() / agingEntity.time_feeds_villager$getMaxAge());
+			compoundTag.putDouble(TAG_AGING, (double)agingEntity.time_feeds_villager$getAge() / agingEntity.time_feeds_villager$getMaxAge());
 			if(agingEntity.time_feeds_villager$isImmuneToAging()) {
 				compoundTag.putBoolean(TAG_IS_IMMUNE_TO_AGING, true);
 			}
