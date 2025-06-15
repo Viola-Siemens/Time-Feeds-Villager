@@ -4,7 +4,13 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "time_feeds_villager.refmap.json",
   "mixins": [
-    "VillagerEntityMixin"
+    "ContainerOpenersCounterMixin",
+    "TradeWithVillagerMixin",
+    "VillagerEntityMixin",
+    "VillagerGoalPackagesMixin",
+    "accessor.BarrelBlockEntityAccessor",
+    "accessor.ChestBlockEntityAccessor",
+    "accessor.EnderChestBlockEntityAccessor"
   ],
   "minVersion": "0.8",
   "client": [

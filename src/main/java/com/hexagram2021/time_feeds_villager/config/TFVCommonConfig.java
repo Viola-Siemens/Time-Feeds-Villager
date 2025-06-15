@@ -11,6 +11,8 @@ public class TFVCommonConfig {
 
 	public static final ForgeConfigSpec.IntValue MAX_AGE;
 	public static final ForgeConfigSpec.ConfigValue<List<? extends String>> FOODS_HELPS_IMMUNE_TO_AGING;
+	public static final ForgeConfigSpec.BooleanValue REMOVE_TRADE_WITH_VILLAGER;
+	public static final ForgeConfigSpec.IntValue INTERVAL_VILLAGER_STEAL_FOODS;
 
 	static {
 		BUILDER.push("time_feeds_villager-common-config");
@@ -20,6 +22,10 @@ public class TFVCommonConfig {
 						new ResourceLocation(ResourceLocation.DEFAULT_NAMESPACE, "golden_apple").toString(),
 						new ResourceLocation(ResourceLocation.DEFAULT_NAMESPACE, "enchanted_golden_apple").toString()
 				), o -> o instanceof String str && ResourceLocation.isValidResourceLocation(str));
+		REMOVE_TRADE_WITH_VILLAGER = BUILDER.comment("If enabled, farmers will never trade foods with other villagers.")
+				.define("REMOVE_TRADE_WITH_VILLAGER", true);
+		INTERVAL_VILLAGER_STEAL_FOODS = BUILDER.comment("How many ticks will villager try to steal another food from containers after making one try.")
+				.defineInRange("INTERVAL_VILLAGER_STEAL_FOODS", 1200, 0, 1200000);
 		BUILDER.pop();
 
 		SPEC = BUILDER.build();
