@@ -141,7 +141,7 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner {
 				this.time_feeds_villager$age += 1;
 			}
 		}
-		if(this.time_feeds_villager$getAge() >= this.time_feeds_villager$getMaxAge()) {
+		if(this.time_feeds_villager$getMaxAge() > 0 && this.time_feeds_villager$getAge() >= this.time_feeds_villager$getMaxAge()) {
 			current.hurt(TFVDamageSources.dieInBed(current), 65536.0F);
 		}
 	}

@@ -82,7 +82,7 @@ public final class GetFoodsFromContainers {
 				instance.group(instance.absent(TFVMemoryModuleTypes.NEAREST_CONTAINER.get()), instance.registered(TFVMemoryModuleTypes.LAST_TRIED_TO_STEAL_FOOD.get()), instance.absent(TFVMemoryModuleTypes.LAST_OPEN_CONTAINER.get()))
 						.apply(instance, (nearestContainer, lastTriedToStealFood, lastOpenContainer) -> (level, villager, tick) -> {
 							long lastTime = instance.tryGet(lastTriedToStealFood).orElse(0L);
-							if(level.getGameTime() - lastTime < TFVCommonConfig.INTERVAL_VILLAGER_STEAL_FOODS.get()) {
+							if(level.getGameTime() - lastTime < TFVCommonConfig.INTERVAL_VILLAGER_FEEL_HUNGRY.get()) {
 								return false;
 							}
 							lastTriedToStealFood.set(level.getGameTime());
