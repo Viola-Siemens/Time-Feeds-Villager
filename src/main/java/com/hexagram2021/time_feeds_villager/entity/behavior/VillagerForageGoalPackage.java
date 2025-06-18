@@ -2,14 +2,16 @@ package com.hexagram2021.time_feeds_villager.entity.behavior;
 
 import com.hexagram2021.time_feeds_villager.block.entity.IContainerWithOpenersCounter;
 import com.hexagram2021.time_feeds_villager.block.entity.IOpenersCounter;
-import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
 import com.hexagram2021.time_feeds_villager.entity.IContainerOwner;
+import com.hexagram2021.time_feeds_villager.entity.IHungryEntity;
+import com.hexagram2021.time_feeds_villager.entity.IInventoryCarrier;
 import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
 import com.mojang.datafixers.kinds.IdF;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.LockCode;
 import net.minecraft.world.entity.ai.behavior.BlockPosTracker;
 import net.minecraft.world.entity.ai.behavior.OneShot;
@@ -33,8 +35,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public final class GetFoodsFromContainers {
-	private GetFoodsFromContainers() {
+public final class VillagerForageGoalPackage {
+	private VillagerForageGoalPackage() {
 	}
 
 	public static OneShot<Villager> setWalkTarget(float speedModifier, int closeEnoughDist, int tooFarDistance, int tooLongUnreachableDuration) {
@@ -77,12 +79,12 @@ public final class GetFoodsFromContainers {
 		);
 	}
 
-	public static OneShot<Villager> findContainerToSteal() {
+	public static OneShot<Villager> findContainerToSteal(int tryToStealFoodDuration) {
 		return BehaviorBuilder.create(instance ->
 				instance.group(instance.absent(TFVMemoryModuleTypes.NEAREST_CONTAINER.get()), instance.registered(TFVMemoryModuleTypes.LAST_TRIED_TO_STEAL_FOOD.get()), instance.absent(TFVMemoryModuleTypes.LAST_OPEN_CONTAINER.get()))
 						.apply(instance, (nearestContainer, lastTriedToStealFood, lastOpenContainer) -> (level, villager, tick) -> {
 							long lastTime = instance.tryGet(lastTriedToStealFood).orElse(0L);
-							if(level.getGameTime() - lastTime < TFVCommonConfig.INTERVAL_VILLAGER_FEEL_HUNGRY.get()) {
+							if(!((IHungryEntity)villager).time_feeds_villager$isHungry() || level.getGameTime() - lastTime < tryToStealFoodDuration) {
 								return false;
 							}
 							lastTriedToStealFood.set(level.getGameTime());
@@ -144,21 +146,50 @@ public final class GetFoodsFromContainers {
 						})
 		);
 	}
-	public static void tryCloseContainerAndStealFood(Level level, BlockPos blockPos, Villager villager, MemoryAccessor<IdF.Mu, GlobalPos> memory1, MemoryAccessor<IdF.Mu, Long> memory2) {
-		if(level.getBlockEntity(blockPos) instanceof Container container && container instanceof IContainerWithOpenersCounter containerWithOpenersCounter &&
-				containerWithOpenersCounter.time_feeds_villager$getOpenersCounter() instanceof IOpenersCounter openersCounter) {
-			openersCounter.time_feeds_villager$decrementEntityOpeners(villager, level, blockPos, level.getBlockState(blockPos));
-			if(villager instanceof IContainerOwner containerOwner) {
-				containerOwner.time_feeds_villager$removeOwnContainer(openersCounter);
+
+	public static OneShot<Villager> eatFoodWhenHungry() {
+		return BehaviorBuilder.create(instance ->
+				instance.group(instance.absent(MemoryModuleType.WALK_TARGET),  instance.absent(TFVMemoryModuleTypes.LAST_OPEN_CONTAINER.get()))
+						.apply(instance, (ignored1, ignored2) -> (level, villager, tick) -> {
+							if(villager instanceof IHungryEntity hungryEntity && hungryEntity.time_feeds_villager$isHungry()) {
+								int remainingEatingTicks = hungryEntity.time_feeds_villager$remainingEatingTicks();
+								ItemStack mainHandItem = villager.getItemInHand(InteractionHand.MAIN_HAND);
+								if(remainingEatingTicks < 0) {
+									return mainHandItem.isEmpty() && hungryEntity.time_feeds_villager$takeOutFoodAndStartEating();
+								}
+								if(remainingEatingTicks == 0) {
+									hungryEntity.time_feeds_villager$finishEating();
+									villager.getBrain().updateActivityFromSchedule(level.getDayTime(), level.getGameTime());
+									return true;
+								}
+								hungryEntity.time_feeds_villager$tickEating();
+								return true;
+							}
+							return false;
+						})
+		);
+	}
+
+	private static void tryCloseContainerAndStealFood(Level level, BlockPos blockPos, Villager villager, MemoryAccessor<IdF.Mu, GlobalPos> memory1, MemoryAccessor<IdF.Mu, Long> memory2) {
+		if(level.getBlockEntity(blockPos) instanceof Container container) {
+			if(container instanceof IContainerWithOpenersCounter containerWithOpenersCounter &&
+					containerWithOpenersCounter.time_feeds_villager$getOpenersCounter() instanceof IOpenersCounter openersCounter) {
+				openersCounter.time_feeds_villager$decrementEntityOpeners(villager, level, blockPos, level.getBlockState(blockPos));
+				if (villager instanceof IContainerOwner containerOwner) {
+					containerOwner.time_feeds_villager$removeOwnContainer(openersCounter);
+				}
 			}
 			if(ForgeEventFactory.getMobGriefingEvent(level, villager)) {
 				for (int i = 0; i < container.getContainerSize(); ++i) {
 					ItemStack itemStack = container.getItem(i);
-					if (canSteal(itemStack, villager)) {
+					if (isEdibleForVillager(itemStack, villager)) {
 						ItemStack ret = itemStack.split(1);
 						if(Villager.FOOD_POINTS.containsKey(itemStack.getItem())) {
 							villager.getInventory().addItem(ret);
+						} else if(villager instanceof IInventoryCarrier inventoryCarrier) {
+							inventoryCarrier.time_feeds_villager$getExtraInventory().addItem(ret);
 						}
+						break;
 					}
 				}
 			}
@@ -251,7 +282,7 @@ public final class GetFoodsFromContainers {
 				return false;
 			}
 			for(int i = 0; i < container.getContainerSize(); ++i) {
-				if(canSteal(container.getItem(i), villager)) {
+				if(isEdibleForVillager(container.getItem(i), villager)) {
 					return true;
 				}
 			}
@@ -259,7 +290,7 @@ public final class GetFoodsFromContainers {
 		return false;
 	}
 
-	private static boolean canSteal(ItemStack itemStack, Villager villager) {
+	public static boolean isEdibleForVillager(ItemStack itemStack, Villager villager) {
 		if(itemStack.isEmpty()) {
 			return false;
 		}

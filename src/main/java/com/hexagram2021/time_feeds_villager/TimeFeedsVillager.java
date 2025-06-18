@@ -1,6 +1,7 @@
 package com.hexagram2021.time_feeds_villager;
 
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
+import com.hexagram2021.time_feeds_villager.register.TFVActivities;
 import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -15,6 +16,7 @@ public class TimeFeedsVillager {
 	public TimeFeedsVillager() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		TFVMemoryModuleTypes.init(bus);
+		TFVActivities.init(bus);
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TFVCommonConfig.getConfig());
 	}
 }

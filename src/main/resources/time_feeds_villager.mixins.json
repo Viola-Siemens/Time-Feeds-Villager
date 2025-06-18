@@ -8,6 +8,7 @@
     "TradeWithVillagerMixin",
     "VillagerEntityMixin",
     "VillagerGoalPackagesMixin",
+    "VillagerMakeLoveMixin",
     "accessor.BarrelBlockEntityAccessor",
     "accessor.ChestBlockEntityAccessor",
     "accessor.EnderChestBlockEntityAccessor"

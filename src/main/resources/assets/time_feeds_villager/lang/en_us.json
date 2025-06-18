@@ -4,12 +4,14 @@
   "language.region": "United States",
 
   "config.jade.plugin_time_feeds_villager.aging": "Villager Aging",
+  "config.jade.plugin_time_feeds_villager.hunger": "Villager Hungering",
   "jade.time_feeds_villager.bracket": "Bracket: %s",
   "jade.time_feeds_villager.childhood": "Childhood",
   "jade.time_feeds_villager.adulthood": "Adulthood",
   "jade.time_feeds_villager.midlife": "Midlife",
   "jade.time_feeds_villager.mature_adulthood": "Mature Adulthood",
   "jade.time_feeds_villager.immune_to_aging": "Immune to Aging",
+  "jade.time_feeds_villager.hungry": "Hungry",
 
   "death.attack.die_in_bed": "%s dies of old age"
 }
