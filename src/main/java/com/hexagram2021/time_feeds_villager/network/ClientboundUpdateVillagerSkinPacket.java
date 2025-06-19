@@ -15,13 +15,13 @@ public class ClientboundUpdateVillagerSkinPacket implements ITFVPacket {
 	}
 
 	public ClientboundUpdateVillagerSkinPacket(FriendlyByteBuf buf) {
-		this.id = buf.readInt();
+		this.id = buf.readVarInt();
 		this.skin = buf.readResourceLocation();
 	}
 
 	@Override
 	public void write(FriendlyByteBuf buf) {
-		buf.writeInt(this.id);
+		buf.writeVarInt(this.id);
 		buf.writeResourceLocation(this.skin);
 	}
 

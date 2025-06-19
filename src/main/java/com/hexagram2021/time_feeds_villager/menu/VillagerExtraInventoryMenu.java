@@ -21,9 +21,11 @@ public class VillagerExtraInventoryMenu extends AbstractContainerMenu {
 		this.villagerExtraContainer = villagerExtraContainer;
 		this.villager = villager;
 		this.armorContainers = new ListContainer(villager.armorItems);
+		checkContainerSize(villagerExtraContainer, 8);
+		checkContainerSize(this.armorContainers, 4);
 		villagerExtraContainer.startOpen(playerInventory.player);
 		for(int i = 0; i < this.armorContainers.getContainerSize(); ++i) {
-			this.addSlot(new Slot(this.armorContainers, i, 90 + 18 * i, 18) {
+			this.addSlot(new Slot(this.armorContainers, 3 - i, 90 + 18 * i, 18) {
 				@Override
 				public boolean mayPlace(ItemStack itemStack) {
 					EquipmentSlot equipmentSlot = Mob.getEquipmentSlotForItem(itemStack);

@@ -86,7 +86,7 @@ public final class VillagerForageGoalPackage {
 				instance.group(instance.absent(TFVMemoryModuleTypes.NEAREST_CONTAINER.get()), instance.registered(TFVMemoryModuleTypes.LAST_TRIED_TO_STEAL_FOOD.get()), instance.absent(TFVMemoryModuleTypes.LAST_OPEN_CONTAINER.get()))
 						.apply(instance, (nearestContainer, lastTriedToStealFood, lastOpenContainer) -> (level, villager, tick) -> {
 							long lastTime = instance.tryGet(lastTriedToStealFood).orElse(0L);
-							if(!((IHungryEntity)villager).time_feeds_villager$isHungry() || level.getGameTime() - lastTime < tryToStealFoodDuration) {
+							if(!(villager instanceof IHungryEntity hungryEntity) || !hungryEntity.time_feeds_villager$isHungry() || hungryEntity.time_feeds_villager$remainingEatingTicks() >= 0 || level.getGameTime() - lastTime < tryToStealFoodDuration) {
 								return false;
 							}
 							lastTriedToStealFood.set(level.getGameTime());

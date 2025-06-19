@@ -5,6 +5,7 @@
   "refmap": "time_feeds_villager.refmap.json",
   "mixins": [
     "ContainerOpenersCounterMixin",
+    "ShowTradesToPlayerMixin",
     "TradeWithVillagerMixin",
     "VillagerEntityMixin",
     "VillagerGoalPackagesMixin",

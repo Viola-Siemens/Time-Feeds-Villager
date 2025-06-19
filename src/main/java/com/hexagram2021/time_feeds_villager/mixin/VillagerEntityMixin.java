@@ -6,7 +6,10 @@ import com.hexagram2021.time_feeds_villager.block.entity.IOpenersCounter;
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
 import com.hexagram2021.time_feeds_villager.entity.*;
 import com.hexagram2021.time_feeds_villager.entity.behavior.VillagerExtraGoalPackages;
+import com.hexagram2021.time_feeds_villager.menu.VillagerExtraInventoryMenu;
 import com.hexagram2021.time_feeds_villager.network.ClientboundUpdateVillagerSkinPacket;
+import com.hexagram2021.time_feeds_villager.network.ClientboundVillagerEatFoodPacket;
+import com.hexagram2021.time_feeds_villager.network.ClientboundVillagerExtraInventoryOpenPacket;
 import com.hexagram2021.time_feeds_villager.network.ServerboundRequestVillagerSkinPacket;
 import com.hexagram2021.time_feeds_villager.register.TFVActivities;
 import com.hexagram2021.time_feeds_villager.register.TFVDamageSources;
@@ -14,12 +17,11 @@ import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
 import com.hexagram2021.time_feeds_villager.util.SimpleContainerOpenersCounter;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.core.particles.ItemParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -35,7 +37,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.objectweb.asm.Opcodes;
@@ -54,9 +57,9 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	@Mutable
 	@Shadow @Final
 	private static ImmutableList<MemoryModuleType<?>> MEMORY_TYPES;
-
 	@Shadow
 	private int foodLevel;
+
 	@Unique
 	private boolean time_feeds_villager$immuneToAging = false;
 	@Unique
@@ -185,22 +188,12 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		if(this.time_feed_villager$remainingEatingTick % 2 == 0) {
 			Villager current = (Villager)(Object)this;
 			current.playSound(SoundEvents.GENERIC_EAT);
-			ItemStack itemStack = current.getItemInHand(InteractionHand.MAIN_HAND);
-			if(!itemStack.isEmpty()) {
-				for(int ignored = 0; ignored < 8; ++ignored) {
-					Vec3 speed = new Vec3((current.getRandom().nextDouble() - 0.5D) * 0.1D, Math.random() * 0.1D + 0.1D, 0.0D);
-					speed = speed.xRot(-current.getXRot() * ((float) Math.PI / 180F));
-					speed = speed.yRot(-current.getYRot() * ((float) Math.PI / 180F));
-					Vec3 position = new Vec3((current.getRandom().nextDouble() - 0.5D) * 0.3D, -current.getRandom().nextDouble() * 0.6D - 0.3D, 0.6D);
-					position = position.xRot(-current.getXRot() * ((float) Math.PI / 180F));
-					position = position.yRot(-current.getYRot() * ((float) Math.PI / 180F));
-					position = position.add(current.getX(), current.getEyeY(), current.getZ());
-					current.level().addParticle(
-							new ItemParticleOption(ParticleTypes.ITEM, itemStack),
-							position.x(), position.y(), position.z(),
-							speed.x(), speed.y(), speed.z()
-					);
-				}
+			if(current.level() instanceof ServerLevel serverLevel) {
+				serverLevel.players().forEach(serverPlayer -> {
+					if(current.distanceTo(serverPlayer) < 32.0D) {
+						TimeFeedsVillager.packetHandler.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new ClientboundVillagerEatFoodPacket(current.getId()));
+					}
+				});
 			}
 		}
 	}
@@ -245,7 +238,8 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	}
 
 	@Inject(method = "mobInteract", at = @At(value = "HEAD"), cancellable = true)
-	private void time_feeds_villager$tryMakeVillagerImmune(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+	private void time_feeds_villager$mobInteract(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+		// try to make villager immune to aging
 		if(!this.time_feeds_villager$isImmuneToAging()) {
 			ItemStack handItemStack = player.getItemInHand(hand);
 			Item handItem = handItemStack.getItem();
@@ -266,9 +260,26 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 				cir.setReturnValue(InteractionResult.sidedSuccess(isClientSide));
 			}
 		}
+		// try to open extra inventory screen
+		if(player.isShiftKeyDown()) {
+			Villager current = (Villager)(Object)this;
+			boolean isClientSide = current.level().isClientSide;
+			if(!isClientSide && player instanceof ServerPlayer serverPlayer) {
+				if (serverPlayer.containerMenu != serverPlayer.inventoryMenu) {
+					serverPlayer.closeContainer();
+				}
+
+				serverPlayer.nextContainerCounter();
+				TimeFeedsVillager.packetHandler.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new ClientboundVillagerExtraInventoryOpenPacket(serverPlayer.containerCounter, current.getId()));
+				serverPlayer.containerMenu = new VillagerExtraInventoryMenu(serverPlayer.containerCounter, serverPlayer.getInventory(), this.time_feeds_villager$extraInventory, current);
+				serverPlayer.initMenu(serverPlayer.containerMenu);
+				MinecraftForge.EVENT_BUS.post(new PlayerContainerEvent.Open(serverPlayer, serverPlayer.containerMenu));
+			}
+			cir.setReturnValue(InteractionResult.sidedSuccess(isClientSide));
+		}
 	}
 
-	@WrapOperation(method = "mobInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/trading/MerchantOffers;isEmpty()Z", ordinal = 0))
+	@WrapOperation(method = "mobInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/trading/MerchantOffers;isEmpty()Z", ordinal = 0, remap = false))
 	private boolean time_feeds_villager$unhappyIfHungry(MerchantOffers instance, Operation<Boolean> original) {
 		return original.call(instance) || this.time_feeds_villager$isHungry();
 	}

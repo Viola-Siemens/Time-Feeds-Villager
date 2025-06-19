@@ -1,11 +1,8 @@
 package com.hexagram2021.time_feeds_villager;
 
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
-import com.hexagram2021.time_feeds_villager.network.ClientboundUpdateVillagerSkinPacket;
-import com.hexagram2021.time_feeds_villager.network.ITFVPacket;
-import com.hexagram2021.time_feeds_villager.network.ServerboundRequestVillagerSkinPacket;
-import com.hexagram2021.time_feeds_villager.register.TFVActivities;
-import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
+import com.hexagram2021.time_feeds_villager.network.*;
+import com.hexagram2021.time_feeds_villager.register.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -38,6 +35,7 @@ public class TimeFeedsVillager {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		TFVMemoryModuleTypes.init(bus);
 		TFVActivities.init(bus);
+		TFVMenuTypes.init(bus);
 		ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, TFVCommonConfig.getConfig());
 		bus.addListener(this::setup);
 	}
@@ -51,5 +49,7 @@ public class TimeFeedsVillager {
 	private void setup(final FMLCommonSetupEvent event) {
 		registerMessage(ServerboundRequestVillagerSkinPacket.class, ServerboundRequestVillagerSkinPacket::new);
 		registerMessage(ClientboundUpdateVillagerSkinPacket.class, ClientboundUpdateVillagerSkinPacket::new);
+		registerMessage(ClientboundVillagerExtraInventoryOpenPacket.class, ClientboundVillagerExtraInventoryOpenPacket::new);
+		registerMessage(ClientboundVillagerEatFoodPacket.class, ClientboundVillagerEatFoodPacket::new);
 	}
 }
