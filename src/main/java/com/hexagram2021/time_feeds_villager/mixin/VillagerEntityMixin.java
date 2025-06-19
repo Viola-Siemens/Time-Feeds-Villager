@@ -1,28 +1,42 @@
 package com.hexagram2021.time_feeds_villager.mixin;
 
 import com.google.common.collect.ImmutableList;
+import com.hexagram2021.time_feeds_villager.TimeFeedsVillager;
 import com.hexagram2021.time_feeds_villager.block.entity.IOpenersCounter;
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
-import com.hexagram2021.time_feeds_villager.entity.IAgingEntity;
-import com.hexagram2021.time_feeds_villager.entity.IContainerOwner;
-import com.hexagram2021.time_feeds_villager.entity.IHungryEntity;
-import com.hexagram2021.time_feeds_villager.entity.IInventoryCarrier;
+import com.hexagram2021.time_feeds_villager.entity.*;
 import com.hexagram2021.time_feeds_villager.entity.behavior.VillagerExtraGoalPackages;
+import com.hexagram2021.time_feeds_villager.network.ClientboundUpdateVillagerSkinPacket;
+import com.hexagram2021.time_feeds_villager.network.ServerboundRequestVillagerSkinPacket;
 import com.hexagram2021.time_feeds_villager.register.TFVActivities;
 import com.hexagram2021.time_feeds_villager.register.TFVDamageSources;
 import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
+import com.hexagram2021.time_feeds_villager.util.SimpleContainerOpenersCounter;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.*;
@@ -32,9 +46,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Objects;
 
 @Mixin(Villager.class)
-public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHungryEntity, IInventoryCarrier {
+public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHungryEntity, IInventoryCarrier, IHasCustomSkinEntity {
 	@Mutable
 	@Shadow @Final
 	private static ImmutableList<MemoryModuleType<?>> MEMORY_TYPES;
@@ -52,7 +68,28 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	@Unique @Nullable
 	private IOpenersCounter time_feeds_villager$ownContainer = null;
 	@Unique
-	private final SimpleContainer time_feeds_villager$extraInventory = new SimpleContainer(8);
+	private final SimpleContainer time_feeds_villager$extraInventory = new SimpleContainer(8) {
+		@Override
+		public void startOpen(Player player) {
+			Villager current = (Villager)(Object)VillagerEntityMixin.this;
+			if (!current.isAlive() && !player.isSpectator()) {
+				VillagerEntityMixin.this.time_feeds_villager$extraInventoryOpenersCounter.incrementOpeners();
+			}
+
+		}
+
+		@Override
+		public void stopOpen(Player player) {
+			Villager current = (Villager)(Object)VillagerEntityMixin.this;
+			if (!current.isAlive() && !player.isSpectator()) {
+				VillagerEntityMixin.this.time_feeds_villager$extraInventoryOpenersCounter.decrementOpeners();
+			}
+		}
+	};
+	@Unique @Nullable
+	private ResourceLocation time_feeds_villager$customSkin = null;
+	@Unique
+	private final SimpleContainerOpenersCounter time_feeds_villager$extraInventoryOpenersCounter = new SimpleContainerOpenersCounter();
 
 	@Override
 	public int time_feeds_villager$getAge() {
@@ -127,10 +164,14 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		ItemStack itemStack = current.getItemInHand(InteractionHand.MAIN_HAND);
 		int foodPoint = Villager.FOOD_POINTS.getOrDefault(itemStack.getItem(), 0);
 		this.foodLevel += foodPoint * itemStack.getCount();
+		int extraTicks = current.getRandom().nextInt(20);
+		FoodProperties foodProperties = itemStack.getFoodProperties(current);
+		if(foodProperties != null) {
+			extraTicks += Math.round(foodProperties.getNutrition() * foodProperties.getSaturationModifier() * 40.0F);
+		}
 		current.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-		this.time_feed_villager$nextHungerTick = TFVCommonConfig.INTERVAL_VILLAGER_FEEL_HUNGRY.get();
+		this.time_feed_villager$nextHungerTick = TFVCommonConfig.INTERVAL_VILLAGER_FEEL_HUNGRY.get() + extraTicks;
 		this.time_feed_villager$remainingEatingTick = -1;
-		current.playSound(SoundEvents.PLAYER_BURP);
 	}
 
 	@Override
@@ -142,7 +183,25 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	public void time_feeds_villager$tickEating() {
 		this.time_feed_villager$remainingEatingTick -= 1;
 		if(this.time_feed_villager$remainingEatingTick % 2 == 0) {
-			((Villager)(Object)this).playSound(SoundEvents.GENERIC_EAT);
+			Villager current = (Villager)(Object)this;
+			current.playSound(SoundEvents.GENERIC_EAT);
+			ItemStack itemStack = current.getItemInHand(InteractionHand.MAIN_HAND);
+			if(!itemStack.isEmpty()) {
+				for(int ignored = 0; ignored < 8; ++ignored) {
+					Vec3 speed = new Vec3((current.getRandom().nextDouble() - 0.5D) * 0.1D, Math.random() * 0.1D + 0.1D, 0.0D);
+					speed = speed.xRot(-current.getXRot() * ((float) Math.PI / 180F));
+					speed = speed.yRot(-current.getYRot() * ((float) Math.PI / 180F));
+					Vec3 position = new Vec3((current.getRandom().nextDouble() - 0.5D) * 0.3D, -current.getRandom().nextDouble() * 0.6D - 0.3D, 0.6D);
+					position = position.xRot(-current.getXRot() * ((float) Math.PI / 180F));
+					position = position.yRot(-current.getYRot() * ((float) Math.PI / 180F));
+					position = position.add(current.getX(), current.getEyeY(), current.getZ());
+					current.level().addParticle(
+							new ItemParticleOption(ParticleTypes.ITEM, itemStack),
+							position.x(), position.y(), position.z(),
+							speed.x(), speed.y(), speed.z()
+					);
+				}
+			}
 		}
 	}
 
@@ -151,25 +210,67 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		return this.time_feeds_villager$extraInventory;
 	}
 
+	@Override
+	public boolean time_feeds_villager$isOpenedByAnyPlayer() {
+		return this.time_feeds_villager$extraInventoryOpenersCounter.getOpenerCount() != 0;
+	}
+
+	@Override
+	public ResourceLocation time_feeds_villager$getCustomSkin() {
+		Villager current = (Villager)(Object)this;
+		return Objects.requireNonNullElseGet(this.time_feeds_villager$customSkin, () -> {
+			this.time_feeds_villager$customSkin = TimeFeedsVillager.VILLAGER_BASE_SKIN;
+			if(current.level().isClientSide) {
+				TimeFeedsVillager.packetHandler.send(PacketDistributor.SERVER.noArg(), new ServerboundRequestVillagerSkinPacket(current.getUUID()));
+			}
+			return this.time_feeds_villager$customSkin;
+		});
+	}
+
+	@Override
+	public void time_feeds_villager$setCustomSkin(ResourceLocation skin) {
+		this.time_feeds_villager$customSkin = skin;
+		Villager current = (Villager)(Object)this;
+		if(current.level() instanceof ServerLevel serverLevel) {
+			serverLevel.players().forEach(serverPlayer -> TimeFeedsVillager.packetHandler.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new ClientboundUpdateVillagerSkinPacket(current.getId(), skin)));
+		}
+	}
+
+	@Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/npc/VillagerType;)V", at = @At(value = "TAIL"))
+	private void time_feeds_villager$constructor(EntityType<? extends Villager> entityType, Level level, VillagerType villagerType, CallbackInfo ci) {
+		if(level instanceof ServerLevel) {
+			List<? extends String> skins = TFVCommonConfig.VILLAGER_SKINS.get();
+			this.time_feeds_villager$customSkin = skins.isEmpty() ? TimeFeedsVillager.VILLAGER_BASE_SKIN : new ResourceLocation(skins.get(level.getRandom().nextInt(skins.size())));
+		}
+	}
+
 	@Inject(method = "mobInteract", at = @At(value = "HEAD"), cancellable = true)
 	private void time_feeds_villager$tryMakeVillagerImmune(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
 		if(!this.time_feeds_villager$isImmuneToAging()) {
-			ItemStack handItem = player.getItemInHand(hand);
-			ResourceLocation item = ForgeRegistries.ITEMS.getKey(handItem.getItem());
+			ItemStack handItemStack = player.getItemInHand(hand);
+			Item handItem = handItemStack.getItem();
+			ResourceLocation item = ForgeRegistries.ITEMS.getKey(handItem);
 			Villager current = (Villager)(Object)this;
 			boolean isClientSide = current.level().isClientSide;
 			if(item != null && TFVCommonConfig.FOODS_HELP_IMMUNE_TO_AGING.get().contains(item.toString())) {
 				if(!isClientSide) {
 					if(!player.getAbilities().instabuild) {
-						handItem.shrink(1);
+						handItemStack.shrink(1);
 					}
 					current.playSound(SoundEvents.GENERIC_EAT);
 					this.time_feeds_villager$setAge(16);
+					current.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(handItem));
+					this.time_feeds_villager$finishEating();
 				}
 				this.time_feeds_villager$setImmuneToAging();
 				cir.setReturnValue(InteractionResult.sidedSuccess(isClientSide));
 			}
 		}
+	}
+
+	@WrapOperation(method = "mobInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/trading/MerchantOffers;isEmpty()Z", ordinal = 0))
+	private boolean time_feeds_villager$unhappyIfHungry(MerchantOffers instance, Operation<Boolean> original) {
+		return original.call(instance) || this.time_feeds_villager$isHungry();
 	}
 
 	@Inject(method = "addAdditionalSaveData", at = @At(value = "TAIL"))
@@ -183,6 +284,9 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 			compound.putBoolean("TFV_IsImmuneToAging", true);
 		}
 		compound.put("TFV_ExtraInventory", this.time_feeds_villager$extraInventory.createTag());
+		if(this.time_feeds_villager$customSkin != null) {
+			compound.putString("TFV_CustomSkin", this.time_feeds_villager$customSkin.toString());
+		}
 	}
 	@Inject(method = "readAdditionalSaveData", at = @At(value = "TAIL"))
 	private void time_feeds_villager$readAdditionalSaveData(CompoundTag compound, CallbackInfo ci) {
@@ -206,6 +310,9 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		}
 		if(compound.contains("TFV_ExtraInventory", Tag.TAG_LIST)) {
 			this.time_feeds_villager$extraInventory.fromTag(compound.getList("TFV_ExtraInventory", Tag.TAG_COMPOUND));
+		}
+		if(compound.contains("TFV_CustomSkin", Tag.TAG_STRING)) {
+			this.time_feeds_villager$setCustomSkin(new ResourceLocation(compound.getString("TFV_CustomSkin")));
 		}
 	}
 

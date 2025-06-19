@@ -16,7 +16,7 @@ public class VillagerForageTrigger extends Behavior<Villager> {
 
 	@Override
 	protected boolean canStillUse(ServerLevel level, Villager entity, long gameTime) {
-		return entity instanceof IHungryEntity hungryEntity && hungryEntity.time_feeds_villager$isHungry();
+		return !entity.isTrading() && entity instanceof IHungryEntity hungryEntity && hungryEntity.time_feeds_villager$isHungry();
 	}
 
 	@Override

@@ -10,6 +10,7 @@ import com.mojang.datafixers.kinds.IdF;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.LockCode;
@@ -26,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
@@ -159,6 +161,7 @@ public final class VillagerForageGoalPackage {
 								}
 								if(remainingEatingTicks == 0) {
 									hungryEntity.time_feeds_villager$finishEating();
+									villager.playSound(SoundEvents.PLAYER_BURP);
 									villager.getBrain().updateActivityFromSchedule(level.getDayTime(), level.getGameTime());
 									return true;
 								}
@@ -278,6 +281,9 @@ public final class VillagerForageGoalPackage {
 
 	private static boolean canStealContainer(Level level, BlockPos containerPos, Villager villager) {
 		if(level.getBlockEntity(containerPos) instanceof Container container) {
+			if(container instanceof RandomizableContainerBlockEntity lootContainer && lootContainer.lootTable != null) {
+				return false;
+			}
 			if(container instanceof BaseContainerBlockEntity baseContainerBlockEntity && baseContainerBlockEntity.lockKey != LockCode.NO_LOCK) {
 				return false;
 			}
