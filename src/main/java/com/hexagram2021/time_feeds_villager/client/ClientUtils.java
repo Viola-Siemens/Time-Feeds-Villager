@@ -1,8 +1,10 @@
 package com.hexagram2021.time_feeds_villager.client;
 
+import com.hexagram2021.time_feeds_villager.client.screen.VillagerClosetScreen;
 import com.hexagram2021.time_feeds_villager.client.screen.VillagerExtraInventoryScreen;
 import com.hexagram2021.time_feeds_villager.entity.IHasCustomSkinEntity;
 import com.hexagram2021.time_feeds_villager.entity.IInventoryCarrier;
+import com.hexagram2021.time_feeds_villager.menu.VillagerClosetMenu;
 import com.hexagram2021.time_feeds_villager.menu.VillagerExtraInventoryMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -23,12 +25,24 @@ public final class ClientUtils {
 	}
 
 	public static void openVillagerExtraInventory(int containerId, int entityId) {
+		// assert: running on Render thread
 		Minecraft minecraft = Minecraft.getInstance();
 		LocalPlayer player = minecraft.player;
 		if(player != null && player.level().getEntity(entityId) instanceof Villager villager && villager instanceof IInventoryCarrier inventoryCarrier) {
 			VillagerExtraInventoryMenu menu = new VillagerExtraInventoryMenu(containerId, player.getInventory(), inventoryCarrier.time_feeds_villager$getExtraInventory(), villager);
 			player.containerMenu = menu;
 			minecraft.setScreen(new VillagerExtraInventoryScreen(menu, player.getInventory(), villager));
+		}
+	}
+
+	public static void openVillagerCloset(int containerId, int entityId) {
+		// assert: running on Render thread
+		Minecraft minecraft = Minecraft.getInstance();
+		LocalPlayer player = minecraft.player;
+		if(player != null && player.level().getEntity(entityId) instanceof Villager villager) {
+			VillagerClosetMenu menu = new VillagerClosetMenu(containerId, villager);
+			player.containerMenu = menu;
+			minecraft.setScreen(new VillagerClosetScreen(menu, player.getInventory(), villager));
 		}
 	}
 

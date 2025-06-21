@@ -1,6 +1,8 @@
 package com.hexagram2021.time_feeds_villager.menu;
 
+import com.hexagram2021.time_feeds_villager.util.CommonUtils;
 import com.hexagram2021.time_feeds_villager.util.ListContainer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -107,7 +109,15 @@ public class VillagerExtraInventoryMenu extends AbstractContainerMenu {
 		this.villagerExtraContainer.stopOpen(player);
 	}
 
-	public Container getContainer() {
-		return this.villagerExtraContainer;
+	@Override
+	public boolean clickMenuButton(Player player, int index) {
+		if (index == 0) {
+			if(!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+				CommonUtils.openVillagerCloset(serverPlayer, this.villager);
+			}
+			return true;
+		}
+
+		return super.clickMenuButton(player, index);
 	}
 }

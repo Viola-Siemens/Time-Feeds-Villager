@@ -50,6 +50,7 @@ public class TimeFeedsVillager {
 		registerMessage(ServerboundRequestVillagerSkinPacket.class, ServerboundRequestVillagerSkinPacket::new);
 		registerMessage(ClientboundUpdateVillagerSkinPacket.class, ClientboundUpdateVillagerSkinPacket::new);
 		registerMessage(ClientboundVillagerExtraInventoryOpenPacket.class, ClientboundVillagerExtraInventoryOpenPacket::new);
+		registerMessage(ClientboundVillagerClosetOpenPacket.class, ClientboundVillagerClosetOpenPacket::new);
 		registerMessage(ClientboundVillagerEatFoodPacket.class, ClientboundVillagerEatFoodPacket::new);
 	}
 }

@@ -13,5 +13,7 @@
   "jade.time_feeds_villager.immune_to_aging": "免疫衰老",
   "jade.time_feeds_villager.hungry": "饥饿",
 
-  "death.attack.die_in_bed": "%s衰老而死"
+  "death.attack.die_in_bed": "%s衰老而死",
+
+  "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "默认村民皮肤"
 }

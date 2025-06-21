@@ -13,5 +13,7 @@
   "jade.time_feeds_villager.immune_to_aging": "Immune to Aging",
   "jade.time_feeds_villager.hungry": "Hungry",
 
-  "death.attack.die_in_bed": "%s dies of old age"
+  "death.attack.die_in_bed": "%s dies of old age",
+
+  "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "Default Villager Skin"
 }

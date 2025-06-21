@@ -6,14 +6,13 @@ import com.hexagram2021.time_feeds_villager.block.entity.IOpenersCounter;
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
 import com.hexagram2021.time_feeds_villager.entity.*;
 import com.hexagram2021.time_feeds_villager.entity.behavior.VillagerExtraGoalPackages;
-import com.hexagram2021.time_feeds_villager.menu.VillagerExtraInventoryMenu;
 import com.hexagram2021.time_feeds_villager.network.ClientboundUpdateVillagerSkinPacket;
 import com.hexagram2021.time_feeds_villager.network.ClientboundVillagerEatFoodPacket;
-import com.hexagram2021.time_feeds_villager.network.ClientboundVillagerExtraInventoryOpenPacket;
 import com.hexagram2021.time_feeds_villager.network.ServerboundRequestVillagerSkinPacket;
 import com.hexagram2021.time_feeds_villager.register.TFVActivities;
 import com.hexagram2021.time_feeds_villager.register.TFVDamageSources;
 import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
+import com.hexagram2021.time_feeds_villager.util.CommonUtils;
 import com.hexagram2021.time_feeds_villager.util.SimpleContainerOpenersCounter;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -37,8 +36,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.objectweb.asm.Opcodes;
@@ -265,15 +262,7 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 			Villager current = (Villager)(Object)this;
 			boolean isClientSide = current.level().isClientSide;
 			if(!isClientSide && player instanceof ServerPlayer serverPlayer) {
-				if (serverPlayer.containerMenu != serverPlayer.inventoryMenu) {
-					serverPlayer.closeContainer();
-				}
-
-				serverPlayer.nextContainerCounter();
-				TimeFeedsVillager.packetHandler.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new ClientboundVillagerExtraInventoryOpenPacket(serverPlayer.containerCounter, current.getId()));
-				serverPlayer.containerMenu = new VillagerExtraInventoryMenu(serverPlayer.containerCounter, serverPlayer.getInventory(), this.time_feeds_villager$extraInventory, current);
-				serverPlayer.initMenu(serverPlayer.containerMenu);
-				MinecraftForge.EVENT_BUS.post(new PlayerContainerEvent.Open(serverPlayer, serverPlayer.containerMenu));
+				CommonUtils.openVillagerExtraInventory(serverPlayer, current, this.time_feeds_villager$extraInventory);
 			}
 			cir.setReturnValue(InteractionResult.sidedSuccess(isClientSide));
 		}
