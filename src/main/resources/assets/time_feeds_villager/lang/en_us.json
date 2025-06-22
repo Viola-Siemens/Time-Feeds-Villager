@@ -18,6 +18,8 @@
   "gui.time_feeds_villager.closet": "Open Closet",
   "gui.time_feeds_villager.inventory": "Back to Inventory",
   "gui.time_feeds_villager.restore": "Restore Default Skin",
+  "gui.time_feeds_villager.mode.stay": "Stay Mode",
+  "gui.time_feeds_villager.mode.work": "Work Mode",
 
   "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "Default Villager Skin"
 }

@@ -18,6 +18,8 @@
   "gui.time_feeds_villager.closet": "打开衣柜",
   "gui.time_feeds_villager.inventory": "返回物品栏",
   "gui.time_feeds_villager.restore": "恢复默认皮肤",
+  "gui.time_feeds_villager.mode.stay": "停留模式",
+  "gui.time_feeds_villager.mode.work": "工作模式",
 
   "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "默认村民皮肤"
 }

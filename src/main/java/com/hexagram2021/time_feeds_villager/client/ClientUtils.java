@@ -4,6 +4,7 @@ import com.hexagram2021.time_feeds_villager.client.screen.VillagerClosetScreen;
 import com.hexagram2021.time_feeds_villager.client.screen.VillagerExtraInventoryScreen;
 import com.hexagram2021.time_feeds_villager.entity.IHasCustomSkinEntity;
 import com.hexagram2021.time_feeds_villager.entity.IInventoryCarrier;
+import com.hexagram2021.time_feeds_villager.entity.ISwitchableEntity;
 import com.hexagram2021.time_feeds_villager.menu.VillagerClosetMenu;
 import com.hexagram2021.time_feeds_villager.menu.VillagerExtraInventoryMenu;
 import net.minecraft.client.Minecraft;
@@ -21,6 +22,12 @@ public final class ClientUtils {
 		LocalPlayer player = Minecraft.getInstance().player;
 		if(player != null && player.level().getEntity(id) instanceof IHasCustomSkinEntity hasCustomSkinEntity) {
 			hasCustomSkinEntity.time_feeds_villager$setCustomSkin(skin);
+		}
+	}
+	public static void setVillagerMode(int id, ISwitchableEntity.Mode mode) {
+		LocalPlayer player = Minecraft.getInstance().player;
+		if(player != null && player.level().getEntity(id) instanceof ISwitchableEntity switchableEntity) {
+			switchableEntity.time_feeds_villager$setMode(mode);
 		}
 	}
 

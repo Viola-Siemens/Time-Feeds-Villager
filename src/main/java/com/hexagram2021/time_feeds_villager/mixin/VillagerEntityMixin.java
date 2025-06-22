@@ -6,9 +6,7 @@ import com.hexagram2021.time_feeds_villager.block.entity.IOpenersCounter;
 import com.hexagram2021.time_feeds_villager.config.TFVCommonConfig;
 import com.hexagram2021.time_feeds_villager.entity.*;
 import com.hexagram2021.time_feeds_villager.entity.behavior.VillagerExtraGoalPackages;
-import com.hexagram2021.time_feeds_villager.network.ClientboundUpdateVillagerSkinPacket;
-import com.hexagram2021.time_feeds_villager.network.ClientboundVillagerEatFoodPacket;
-import com.hexagram2021.time_feeds_villager.network.ServerboundRequestVillagerSkinPacket;
+import com.hexagram2021.time_feeds_villager.network.*;
 import com.hexagram2021.time_feeds_villager.register.TFVActivities;
 import com.hexagram2021.time_feeds_villager.register.TFVDamageSources;
 import com.hexagram2021.time_feeds_villager.register.TFVMemoryModuleTypes;
@@ -50,7 +48,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Mixin(Villager.class)
-public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHungryEntity, IInventoryCarrier, IHasCustomSkinEntity {
+public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHungryEntity, IInventoryCarrier, IHasCustomSkinEntity, ISwitchableEntity {
 	@Mutable
 	@Shadow @Final
 	private static ImmutableList<MemoryModuleType<?>> MEMORY_TYPES;
@@ -90,6 +88,8 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	private ResourceLocation time_feeds_villager$customSkin = null;
 	@Unique
 	private final SimpleContainerOpenersCounter time_feeds_villager$extraInventoryOpenersCounter = new SimpleContainerOpenersCounter();
+	@Unique @Nullable
+	private Mode time_feeds_villager$mode = null;
 
 	@Override
 	public int time_feeds_villager$getAge() {
@@ -226,6 +226,27 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		}
 	}
 
+	@Override
+	public Mode time_feeds_villager$getMode() {
+		Villager current = (Villager)(Object)this;
+		return Objects.requireNonNullElseGet(this.time_feeds_villager$mode, () -> {
+			this.time_feeds_villager$mode = Mode.WORK;
+			if(current.level().isClientSide) {
+				TimeFeedsVillager.packetHandler.send(PacketDistributor.SERVER.noArg(), new ServerboundRequestVillagerModePacket(current.getUUID()));
+			}
+			return this.time_feeds_villager$mode;
+		});
+	}
+
+	@Override
+	public void time_feeds_villager$setMode(Mode mode) {
+		this.time_feeds_villager$mode = mode;
+		Villager current = (Villager)(Object)this;
+		if(current.level() instanceof ServerLevel serverLevel) {
+			serverLevel.players().forEach(serverPlayer -> TimeFeedsVillager.packetHandler.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new ClientboundUpdateVillagerModePacket(current.getId(), mode)));
+		}
+	}
+
 	@Inject(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/npc/VillagerType;)V", at = @At(value = "TAIL"))
 	private void time_feeds_villager$constructor(EntityType<? extends Villager> entityType, Level level, VillagerType villagerType, CallbackInfo ci) {
 		if(level instanceof ServerLevel) {
@@ -287,6 +308,9 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		if(this.time_feeds_villager$customSkin != null) {
 			compound.putString("TFV_CustomSkin", this.time_feeds_villager$customSkin.toString());
 		}
+		if(this.time_feeds_villager$mode != null) {
+			compound.putString("TFV_Mode", this.time_feeds_villager$mode.name());
+		}
 	}
 	@Inject(method = "readAdditionalSaveData", at = @At(value = "TAIL"))
 	private void time_feeds_villager$readAdditionalSaveData(CompoundTag compound, CallbackInfo ci) {
@@ -313,6 +337,14 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		}
 		if(compound.contains("TFV_CustomSkin", Tag.TAG_STRING)) {
 			this.time_feeds_villager$setCustomSkin(new ResourceLocation(compound.getString("TFV_CustomSkin")));
+		}
+		if(compound.contains("TFV_Mode", Tag.TAG_STRING)) {
+			Mode mode = Mode.WORK;
+			try {
+				mode = Mode.valueOf(compound.getString("TFV_Mode"));
+			} catch (Exception ignored) {
+			}
+			this.time_feeds_villager$setMode(mode);
 		}
 	}
 
@@ -347,6 +379,7 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 	@Inject(method = "registerBrainGoals", at = @At(value = "HEAD"))
 	private void time_feeds_villager$registerExtraBrainGoals(Brain<Villager> villagerBrain, CallbackInfo ci) {
 		villagerBrain.addActivity(TFVActivities.FORAGE.get(), VillagerExtraGoalPackages.getForagePackage(0.6F));
+		villagerBrain.addActivity(TFVActivities.STAY.get(), VillagerExtraGoalPackages.getStayPackage(0.5F));
 	}
 
 	@Inject(method = "<clinit>", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/npc/Villager;MEMORY_TYPES:Lcom/google/common/collect/ImmutableList;", opcode = Opcodes.PUTSTATIC, shift = At.Shift.AFTER))

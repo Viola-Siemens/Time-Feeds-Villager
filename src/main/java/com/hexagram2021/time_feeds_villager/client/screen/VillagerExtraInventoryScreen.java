@@ -1,5 +1,6 @@
 package com.hexagram2021.time_feeds_villager.client.screen;
 
+import com.hexagram2021.time_feeds_villager.entity.ISwitchableEntity;
 import com.hexagram2021.time_feeds_villager.menu.VillagerExtraInventoryMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Inventory;
+
+import java.util.Locale;
 
 import static com.hexagram2021.time_feeds_villager.TimeFeedsVillager.MODID;
 
@@ -32,15 +35,27 @@ public class VillagerExtraInventoryScreen extends AbstractContainerScreen<Villag
 
 	private int clicked = -1;
 	private void renderButtons(GuiGraphics transform, int mouseX, int mouseY) {
-		int buttonV = this.imageHeight;
-		int buttonX = this.leftPos + 68;
-		int buttonY = this.topPos + 60;
-		if(this.clicked == 0) {
-			buttonV += 10;
-		} else if(mouseX >= buttonX && mouseX < buttonX + 10 && mouseY >= buttonY && mouseY < buttonY + 10) {
-			buttonV += 20;
+		// closet: 0
+		this.renderButton(transform, mouseX, mouseY, 68, 60, 0, 0, 10);
+		// mode: 1
+		int modeButtonU = 20;
+		if(this.villager instanceof ISwitchableEntity switchableEntity) {
+			modeButtonU = switchableEntity.time_feeds_villager$getMode().ordinal() * 10 + 10;
 		}
-		transform.blit(LOCATION, buttonX, buttonY, 0, buttonV, 10, 10);
+		this.renderButton(transform, mouseX, mouseY, 68, 18, modeButtonU, 1, 10);
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private void renderButton(GuiGraphics transform, int mouseX, int mouseY, int buttonX, int buttonY, int buttonU, int buttonIndex, int buttonSize) {
+		int buttonV = this.imageHeight;
+		buttonX = this.leftPos + buttonX;
+		buttonY = this.topPos + buttonY;
+		if(this.clicked == buttonIndex) {
+			buttonV += buttonSize;
+		} else if(mouseX >= buttonX && mouseX < buttonX + buttonSize && mouseY >= buttonY && mouseY < buttonY + buttonSize) {
+			buttonV += buttonSize * 2;
+		}
+		transform.blit(LOCATION, buttonX, buttonY, buttonU, buttonV, buttonSize, buttonSize);
 	}
 
 	@Override
@@ -53,36 +68,47 @@ public class VillagerExtraInventoryScreen extends AbstractContainerScreen<Villag
 	@Override
 	protected void renderTooltip(GuiGraphics transform, int x, int y) {
 		super.renderTooltip(transform, x, y);
-		double dx = x - this.leftPos - 68;
-		double dy = y - this.topPos - 60;
-		if(dx >= 0.0D && dy >= 0.0D && dx < 10 && dy < 10) {
-			transform.renderTooltip(this.font, Component.translatable("gui.time_feeds_villager.closet"), x, y);
+		this.renderButtonTooltip(transform, x, y, 68, 60, "closet", 10);
+		String modeName = "work";
+		if(this.villager instanceof ISwitchableEntity switchableEntity) {
+			modeName = switchableEntity.time_feeds_villager$getMode().name().toLowerCase(Locale.ROOT);
+		}
+		this.renderButtonTooltip(transform, x, y, 68, 18, "mode.%s".formatted(modeName), 10);
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private void renderButtonTooltip(GuiGraphics transform, int x, int y, int buttonX, int buttonY, String buttonTooltip, int buttonSize) {
+		double dx = x - this.leftPos - buttonX;
+		double dy = y - this.topPos - buttonY;
+		if(dx >= 0.0D && dy >= 0.0D && dx < buttonSize && dy < buttonSize) {
+			transform.renderTooltip(this.font, Component.translatable("gui.time_feeds_villager." + buttonTooltip), x, y);
 		}
 	}
 
 	@Override
 	public boolean mouseClicked(double x, double y, int mouseButton) {
-		double dx = x - this.leftPos - 68;
-		double dy = y - this.topPos - 60;
-		if(dx >= 0.0D && dy >= 0.0D && dx < 10.0D && dy < 10.0D) {
-			this.clicked = 0;
+		return this.mouseClickedButton(x, y, 68, 60, 0, 10) ||
+				this.mouseClickedButton(x, y, 68, 18, 1, 10) ||
+				super.mouseClicked(x, y, mouseButton);
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private boolean mouseClickedButton(double x, double y, double buttonX, double buttonY, int buttonIndex, double buttonSize) {
+		double dx = x - this.leftPos - buttonX;
+		double dy = y - this.topPos - buttonY;
+		if(dx >= 0.0D && dy >= 0.0D && dx < buttonSize && dy < buttonSize) {
+			this.clicked = buttonIndex;
+			return true;
 		}
-		return super.mouseClicked(x, y, mouseButton);
+		return false;
 	}
 
 	@SuppressWarnings("DataFlowIssue")
 	@Override
 	public boolean mouseReleased(double x, double y, int mouseButton) {
 		if(this.clicked >= 0) {
-			boolean flag = false;
-
-			double dx = x - this.leftPos - 68;
-			double dy = y - this.topPos - 60;
-			if(dx >= 0.0D && dy >= 0.0D && dx < 10.0D && dy < 10.0D) {
-				if(this.clicked == 0) {
-					flag = true;
-				}
-			}
+			boolean flag = this.mouseReleasedButton(x, y, 68, 60, 0, 10) ||
+					this.mouseReleasedButton(x, y, 68, 18, 1, 10);
 
 			if(flag && this.menu.clickMenuButton(this.minecraft.player, this.clicked)) {
 				Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_STONECUTTER_SELECT_RECIPE, 1.0F));
@@ -93,5 +119,15 @@ public class VillagerExtraInventoryScreen extends AbstractContainerScreen<Villag
 		}
 		this.clicked = -1;
 		return super.mouseReleased(x, y, mouseButton);
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private boolean mouseReleasedButton(double x, double y, double buttonX, double buttonY, int buttonIndex, double buttonSize) {
+		double dx = x - this.leftPos - buttonX;
+		double dy = y - this.topPos - buttonY;
+		if(dx >= 0.0D && dy >= 0.0D && dx < buttonSize && dy < buttonSize) {
+			return this.clicked == buttonIndex;
+		}
+		return false;
 	}
 }

@@ -1,5 +1,6 @@
 package com.hexagram2021.time_feeds_villager.menu;
 
+import com.hexagram2021.time_feeds_villager.entity.ISwitchableEntity;
 import com.hexagram2021.time_feeds_villager.util.CommonUtils;
 import com.hexagram2021.time_feeds_villager.util.ListContainer;
 import net.minecraft.server.level.ServerPlayer;
@@ -111,13 +112,29 @@ public class VillagerExtraInventoryMenu extends AbstractContainerMenu {
 
 	@Override
 	public boolean clickMenuButton(Player player, int index) {
-		if (index == 0) {
-			if(!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-				CommonUtils.openVillagerCloset(serverPlayer, this.villager);
-			}
-			return true;
-		}
+		return switch (index) {
+			case 0 -> this.closet(player);
+			case 1 -> this.switchMode();
+			default -> super.clickMenuButton(player, index);
+		};
+	}
 
-		return super.clickMenuButton(player, index);
+	private boolean closet(Player player) {
+		if(!player.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+			CommonUtils.openVillagerCloset(serverPlayer, this.villager);
+		}
+		return true;
+	}
+
+	private boolean switchMode() {
+		if(this.villager instanceof ISwitchableEntity switchableEntity) {
+			ISwitchableEntity.Mode mode = switchableEntity.time_feeds_villager$getMode();
+			int id = ISwitchableEntity.Mode.getModeId(mode);
+			int totalSize = ISwitchableEntity.Mode.getSizeOfModes();
+			id = (id + 1) % totalSize;
+			mode = ISwitchableEntity.Mode.getMode(id);
+			switchableEntity.time_feeds_villager$setMode(mode);
+		}
+		return true;
 	}
 }

@@ -48,7 +48,9 @@ public class TimeFeedsVillager {
 
 	private void setup(final FMLCommonSetupEvent event) {
 		registerMessage(ServerboundRequestVillagerSkinPacket.class, ServerboundRequestVillagerSkinPacket::new);
+		registerMessage(ServerboundRequestVillagerModePacket.class, ServerboundRequestVillagerModePacket::new);
 		registerMessage(ClientboundUpdateVillagerSkinPacket.class, ClientboundUpdateVillagerSkinPacket::new);
+		registerMessage(ClientboundUpdateVillagerModePacket.class, ClientboundUpdateVillagerModePacket::new);
 		registerMessage(ClientboundVillagerExtraInventoryOpenPacket.class, ClientboundVillagerExtraInventoryOpenPacket::new);
 		registerMessage(ClientboundVillagerClosetOpenPacket.class, ClientboundVillagerClosetOpenPacket::new);
 		registerMessage(ClientboundVillagerEatFoodPacket.class, ClientboundVillagerEatFoodPacket::new);

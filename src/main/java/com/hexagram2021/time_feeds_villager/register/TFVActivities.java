@@ -12,11 +12,11 @@ public class TFVActivities {
 	private static final DeferredRegister<Activity> REGISTER = DeferredRegister.create(ForgeRegistries.ACTIVITIES, MODID);
 
 	public static final RegistryObject<Activity> FORAGE = register("forage");
+	public static final RegistryObject<Activity> STAY = register("stay");
 
 	private TFVActivities() {
 	}
 
-	@SuppressWarnings("SameParameterValue")
 	private static RegistryObject<Activity> register(String name) {
 		return REGISTER.register(name, () -> new Activity(MODID + "_" + name));
 	}
