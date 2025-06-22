@@ -16,6 +16,7 @@ Dependency: [Mixin Extras](https://repo1.maven.org/maven2/io/github/llamalad7/mi
 
 四、皮肤
 - [x] 村民拥有更多初始皮肤。
+- [x] 玩家可以通过 UI 设置村民皮肤。
 
 五、繁殖
 - [ ] 两位村民必须都处于“停留模式”（见 6-3）才可以繁殖。

@@ -15,5 +15,9 @@
 
   "death.attack.die_in_bed": "%s dies of old age",
 
+  "gui.time_feeds_villager.closet": "Open Closet",
+  "gui.time_feeds_villager.inventory": "Back to Inventory",
+  "gui.time_feeds_villager.restore": "Restore Default Skin",
+
   "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "Default Villager Skin"
 }

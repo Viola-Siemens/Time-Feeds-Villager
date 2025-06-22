@@ -15,5 +15,9 @@
 
   "death.attack.die_in_bed": "%s衰老而死",
 
+  "gui.time_feeds_villager.closet": "打开衣柜",
+  "gui.time_feeds_villager.inventory": "返回物品栏",
+  "gui.time_feeds_villager.restore": "恢复默认皮肤",
+
   "time_feeds_villager.skins.minecraft.textures/entity/villager/villager.png": "默认村民皮肤"
 }

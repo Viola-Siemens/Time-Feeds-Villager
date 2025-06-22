@@ -80,6 +80,22 @@ public class VillagerClosetScreen extends AbstractContainerScreen<VillagerCloset
 	}
 
 	@Override
+	protected void renderTooltip(GuiGraphics transform, int x, int y) {
+		super.renderTooltip(transform, x, y);
+		this.renderButtonTooltip(transform, x, y, 123, 101,"restore", 10);
+		this.renderButtonTooltip(transform, x, y, 123, 111,"inventory", 10);
+	}
+
+	@SuppressWarnings("SameParameterValue")
+	private void renderButtonTooltip(GuiGraphics transform, int x, int y, int buttonX, int buttonY, String buttonTooltip, int buttonSize) {
+		double dx = x - this.leftPos - buttonX;
+		double dy = y - this.topPos - buttonY;
+		if(dx >= 0.0D && dy >= 0.0D && dx < buttonSize && dy < buttonSize) {
+			transform.renderTooltip(this.font, Component.translatable("gui.time_feeds_villager." + buttonTooltip), x, y);
+		}
+	}
+
+	@Override
 	public boolean mouseClicked(double x, double y, int mouseButton) {
 		return this.mouseClickedButton(x, y, 123, 101,0, 10) ||
 				this.mouseClickedButton(x, y, 123, 111,1, 10) ||

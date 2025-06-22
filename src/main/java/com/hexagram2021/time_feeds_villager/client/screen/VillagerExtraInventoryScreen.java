@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
@@ -47,6 +48,16 @@ public class VillagerExtraInventoryScreen extends AbstractContainerScreen<Villag
 		this.renderBackground(transform);
 		super.render(transform, mouseX, mouseY, partialTick);
 		this.renderTooltip(transform, mouseX, mouseY);
+	}
+
+	@Override
+	protected void renderTooltip(GuiGraphics transform, int x, int y) {
+		super.renderTooltip(transform, x, y);
+		double dx = x - this.leftPos - 68;
+		double dy = y - this.topPos - 60;
+		if(dx >= 0.0D && dy >= 0.0D && dx < 10 && dy < 10) {
+			transform.renderTooltip(this.font, Component.translatable("gui.time_feeds_villager.closet"), x, y);
+		}
 	}
 
 	@Override
