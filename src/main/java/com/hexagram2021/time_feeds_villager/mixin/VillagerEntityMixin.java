@@ -23,6 +23,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -168,6 +170,11 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		FoodProperties foodProperties = itemStack.getFoodProperties(current);
 		if(foodProperties != null) {
 			extraTicks += Math.round(foodProperties.getNutrition() * foodProperties.getSaturationModifier() * 40.0F);
+			foodProperties.getEffects().forEach(pair -> {
+				if (!current.level().isClientSide && pair.getFirst() != null && current.getRandom().nextFloat() < pair.getSecond()) {
+					current.addEffect(new MobEffectInstance(pair.getFirst()));
+				}
+			});
 		}
 		current.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
 		this.time_feed_villager$nextHungerTick = TFVCommonConfig.INTERVAL_VILLAGER_FEEL_HUNGRY.get() + extraTicks;
@@ -356,6 +363,10 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		}
 		if(!current.isSleeping() && this.time_feed_villager$nextHungerTick > 0) {
 			this.time_feed_villager$nextHungerTick -= 1;
+			MobEffectInstance effectInstance = current.getEffect(MobEffects.HUNGER);
+			if(effectInstance != null) {
+				this.time_feed_villager$nextHungerTick -= 1 + effectInstance.getAmplifier();
+			}
 		}
 		if(!current.isBaby()) {
 			if(this.time_feeds_villager$isImmuneToAging()) {
