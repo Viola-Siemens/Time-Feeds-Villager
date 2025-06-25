@@ -354,7 +354,7 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		if(current.level().isClientSide) {
 			return;
 		}
-		if(this.time_feed_villager$nextHungerTick > 0) {
+		if(!current.isSleeping() && this.time_feed_villager$nextHungerTick > 0) {
 			this.time_feed_villager$nextHungerTick -= 1;
 		}
 		if(!current.isBaby()) {
