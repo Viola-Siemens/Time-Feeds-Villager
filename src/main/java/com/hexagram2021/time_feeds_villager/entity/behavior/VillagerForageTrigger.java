@@ -21,6 +21,9 @@ public class VillagerForageTrigger extends Behavior<Villager> {
 
 	@Override
 	protected void start(ServerLevel level, Villager entity, long gameTime) {
+		if(entity.isTrading() || entity.isSleeping()) {
+			return;
+		}
 		if(entity instanceof IHungryEntity hungryEntity && hungryEntity.time_feeds_villager$isHungry()) {
 			Brain<?> brain = entity.getBrain();
 			if(!brain.isActive(TFVActivities.FORAGE.get())) {

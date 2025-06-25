@@ -361,13 +361,23 @@ public class VillagerEntityMixin implements IAgingEntity, IContainerOwner, IHung
 		if(current.level().isClientSide) {
 			return;
 		}
-		if(!current.isSleeping() && this.time_feed_villager$nextHungerTick > 0) {
-			this.time_feed_villager$nextHungerTick -= 1;
+
+		// hunger tick
+		if(this.time_feed_villager$nextHungerTick > 0) {
+			if(!current.isSleeping()) {
+				this.time_feed_villager$nextHungerTick -= 1;
+			}
 			MobEffectInstance effectInstance = current.getEffect(MobEffects.HUNGER);
 			if(effectInstance != null) {
 				this.time_feed_villager$nextHungerTick -= 1 + effectInstance.getAmplifier();
 			}
+			effectInstance = current.getEffect(MobEffects.SATURATION);
+			if(effectInstance != null) {
+				this.time_feed_villager$nextHungerTick += 1 + effectInstance.getAmplifier();
+			}
 		}
+
+		// aging tick
 		if(!current.isBaby()) {
 			if(this.time_feeds_villager$isImmuneToAging()) {
 				if(this.time_feeds_villager$getAge() >= 0) {
